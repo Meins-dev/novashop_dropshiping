@@ -1,7 +1,3 @@
-"""Minimal ASGI app exposing a `/status` endpoint for `SmartRouter`.
-
-Run with an ASGI server (e.g. `uvicorn python.status_asgi:app`).
-"""
 import json
 import asyncio
 from typing import Callable
