@@ -140,6 +140,109 @@
         font-size: 0.85rem;
       }
 
+      .learning-section {
+        padding: 2rem 1.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .learning-card {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 1.5rem;
+        background: #fff;
+        border-radius: 20px;
+        padding: 1.75rem;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+      }
+      .learning-card h2 {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+      }
+      .learning-card p {
+        color: #555;
+        line-height: 1.75;
+        margin-bottom: 1.25rem;
+      }
+      .learning-block {
+        background: #f8f8ff;
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+      }
+      .learning-block h3 {
+        margin-bottom: 0.8rem;
+        font-size: 1rem;
+      }
+      .learning-block p {
+        margin-bottom: 1rem;
+      }
+      .learning-block button,
+      .primary-btn,
+      .secondary-btn {
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: background 0.2s ease;
+      }
+      .primary-btn {
+        background: #e63946;
+        color: #fff;
+      }
+      .primary-btn:hover {
+        background: #c1303b;
+      }
+      .secondary-btn {
+        background: #4361ee;
+        color: #fff;
+      }
+      .secondary-btn:hover {
+        background: #3656c8;
+      }
+      .quiz-card {
+        margin-top: 1rem;
+      }
+      .quiz-question {
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+      .quiz-options {
+        display: grid;
+        gap: 0.75rem;
+      }
+      .quiz-option {
+        padding: 0.9rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .quiz-option:hover {
+        border-color: #4361ee;
+        background: #f0f4ff;
+      }
+      .quiz-option.selected {
+        border-color: #e63946;
+        background: #fff0f2;
+      }
+      .quiz-feedback {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        background: #f0f4ff;
+        color: #1d3557;
+      }
+      .quiz-feedback.correct {
+        background: #e7f8f3;
+        color: #1b5e3c;
+      }
+      .quiz-feedback.incorrect {
+        background: #ffe7e7;
+        color: #7d1f22;
+      }
+
       /* Banner urgencia */
       .urgency-banner {
         background: #1d3557;
@@ -924,6 +1027,7 @@
       <a href="#" class="logo">NovaShop</a>
       <ul class="nav-links">
         <li><a href="#products">Produtos</a></li>
+        <li><a href="#learning">Estudos</a></li>
       </ul>
       <div class="search-box">
         <span>&#128269;</span>
@@ -955,6 +1059,33 @@
         </div>
         <div class="hero-stat">
           <strong>4.6</strong><small>Nota media</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="learning-section" id="learning">
+      <div class="learning-card">
+        <div>
+          <h2>Estudos de Programação Interativos</h2>
+          <p>
+            Pratique lógica, HTML, Git e boas práticas enquanto navega no site.
+            Responda ao desafio comum do dia e receba uma dica útil para seus estudos.
+          </p>
+          <div class="learning-block">
+            <h3>Desafio do Dia</h3>
+            <div id="quizArea">
+              <p class="quiz-question" id="quizQuestion">Clique em carregar para ver o próximo desafio.</p>
+              <div class="quiz-options" id="quizOptions"></div>
+              <button class="primary-btn" id="loadQuizBtn">Carregar Desafio</button>
+              <button class="secondary-btn" id="submitQuizBtn" style="display:none; margin-top:0.75rem;">Enviar Resposta</button>
+              <div class="quiz-feedback" id="quizFeedback" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="learning-block">
+          <h3>Dica de Estudo</h3>
+          <p id="learningTip">Carregando dica...</p>
+          <button class="secondary-btn" id="newTipBtn">Nova Dica</button>
         </div>
       </div>
     </section>
@@ -1224,6 +1355,8 @@
       let appliedCoupon = null;
       let shippingInfo = null;
       let currentPayment = "pix";
+      let currentQuiz = null;
+      let currentSelection = null;
 
       // ── Countdown ──
       let countdownSec = 2 * 60 * 60; // 2h
@@ -1374,6 +1507,78 @@
       function fmt(v) {
         return v.toFixed(2).replace(".", ",");
       }
+
+      async function loadTip() {
+        try {
+          const res = await fetch(`${API}/api/tips`);
+          const data = await res.json();
+          document.getElementById("learningTip").textContent = data.tip;
+        } catch (err) {
+          document.getElementById("learningTip").textContent =
+            "Erro ao carregar dica. Tente novamente.";
+        }
+      }
+
+      async function loadQuiz() {
+        try {
+          const res = await fetch(`${API}/api/quiz`);
+          const data = await res.json();
+          currentQuiz = data.question;
+          currentSelection = null;
+          document.getElementById("quizQuestion").textContent = currentQuiz.prompt;
+          const options = document.getElementById("quizOptions");
+          options.innerHTML = currentQuiz.options
+            .map(
+              (option, index) =>
+                `<div class="quiz-option" data-index="${index}">${option}</div>`,
+            )
+            .join("");
+          document.querySelectorAll(".quiz-option").forEach((opt) => {
+            opt.addEventListener("click", () => {
+              document
+                .querySelectorAll(".quiz-option")
+                .forEach((o) => o.classList.remove("selected"));
+              opt.classList.add("selected");
+              currentSelection = Number(opt.dataset.index);
+              document.getElementById("submitQuizBtn").style.display = "inline-block";
+              document.getElementById("quizFeedback").style.display = "none";
+            });
+          });
+        } catch (err) {
+          document.getElementById("quizQuestion").textContent =
+            "Falha ao carregar o desafio. Recarregue a página.";
+        }
+      }
+
+      async function submitQuiz() {
+        if (currentQuiz === null) {
+          showToast("Carregue um desafio antes de enviar.");
+          return;
+        }
+        if (currentSelection === null) {
+          showToast("Selecione uma opção para responder.");
+          return;
+        }
+
+        const res = await fetch(`${API}/api/quiz/answer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question_id: currentQuiz.id,
+            selected: currentSelection,
+          }),
+        });
+        const data = await res.json();
+        const feedback = document.getElementById("quizFeedback");
+        feedback.style.display = "block";
+        feedback.className = "quiz-feedback " + (data.correct ? "correct" : "incorrect");
+        feedback.innerHTML = data.correct
+          ? `Correto! ${data.explanation}`
+          : `Ops! Resposta incorreta. ${data.explanation}`;
+      }
+
+      document.getElementById("loadQuizBtn").addEventListener("click", loadQuiz);
+      document.getElementById("newTipBtn").addEventListener("click", loadTip);
 
       // Search and sort
       document
@@ -1762,6 +1967,7 @@
       }
 
       loadProducts();
+      loadTip();
     </script>
   </body>
 </html>
