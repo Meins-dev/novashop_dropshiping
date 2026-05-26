@@ -414,6 +414,45 @@ COUPONS = {
     "PRIMEIRACOMPRA": {"discount": 15, "type": "percent", "min_value": 80, "label": "15% OFF primeira compra"},
 }
 
+QUIZ_QUESTIONS = [
+    {
+        "id": 1,
+        "prompt": "Qual dos seguintes é um tipo de dado primitivo em Python?",
+        "options": ["Lista", "Dicionário", "Inteiro", "Classe"],
+        "correct_index": 2,
+        "explanation": "O tipo inteiro (int) é um tipo primitivo em Python. Listas e dicionários são tipos de coleção, e classes são estruturas de definição de objetos.",
+    },
+    {
+        "id": 2,
+        "prompt": "O que significa HTML em desenvolvimento web?",
+        "options": ["HyperText Markup Language", "HighText Markdown Language", "Hyperlink Media Language", "HyperText Making Language"],
+        "correct_index": 0,
+        "explanation": "HTML significa HyperText Markup Language e é a linguagem de marcação usada para estruturar páginas web.",
+    },
+    {
+        "id": 3,
+        "prompt": "Qual atributo HTML usamos para carregar um arquivo CSS externo?",
+        "options": ["src", "href", "link", "rel"],
+        "correct_index": 1,
+        "explanation": "O atributo href é usado dentro da tag <link> para referenciar um arquivo CSS externo.",
+    },
+    {
+        "id": 4,
+        "prompt": "Qual comando Git cria um novo branch local?",
+        "options": ["git branch nome", "git checkout main", "git clone nome", "git push origin"],
+        "correct_index": 0,
+        "explanation": "O comando git branch nome cria um novo branch local com o nome especificado.",
+    },
+]
+
+LEARNING_TIPS = [
+    "Quebre problemas grandes em etapas menores antes de codificar.",
+    "Comente seu código com clareza para lembrar por que cada parte existe.",
+    "Use o console do navegador para inspecionar variáveis em JavaScript rapidamente.",
+    "Pratique algoritmos pequenos diariamente para fortalecer lógica de programação.",
+    "Sempre teste seu código com casos extremos para evitar bugs inesperados.",
+]
+
 # ── Tabela de frete por região (CEP) ────────────────────────────────
 SHIPPING_TABLE = [
     (1, 19999, "SP", 12.90, 3),    # SP capital/regiao - 3 dias
@@ -518,6 +557,22 @@ class StoreHandler(SimpleHTTPRequestHandler):
             self._json({"valid": True, "coupon": {**coupon, "code": code}})
             return
 
+        if path == "/api/tips":
+            tip = random.choice(LEARNING_TIPS)
+            self._json({"tip": tip})
+            return
+
+        if path == "/api/quiz":
+            question = random.choice(QUIZ_QUESTIONS)
+            self._json({
+                "question": {
+                    "id": question["id"],
+                    "prompt": question["prompt"],
+                    "options": question["options"],
+                }
+            })
+            return
+
         if path.startswith("/api/orders/"):
             order_id = path.split("/")[-1]
             try:
@@ -537,6 +592,23 @@ class StoreHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         global ORDER_COUNTER
         path = urlparse(self.path).path
+
+        if path == "/api/quiz/answer":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length))
+            question_id = body.get("question_id")
+            selected = body.get("selected")
+            question = next((q for q in QUIZ_QUESTIONS if q["id"] == question_id), None)
+            if not question:
+                self._json({"error": "Pergunta não encontrada"}, 404)
+                return
+            correct = selected == question["correct_index"]
+            self._json({
+                "correct": correct,
+                "correct_index": question["correct_index"],
+                "explanation": question["explanation"],
+            })
+            return
 
         if path == "/api/orders":
             length = int(self.headers.get("Content-Length", 0))
