@@ -1,11 +1,6 @@
-"""
-test_atomic_chat_provider.py
-Run: pytest python/tests/test_atomic_chat_provider.py -v
-"""
-
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from project_dropshiping.python.atomic_chat_provider import (
+from atomic_chat_provider import (
     atomic_chat,
     list_atomic_chat_models,
     check_atomic_chat_running,

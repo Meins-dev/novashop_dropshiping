@@ -1,14 +1,7 @@
-"""
-test_smart_router.py
---------------------
-Tests for the SmartRouter.
-Run: pytest python/tests/test_smart_router.py -v
-"""
-
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from project_dropshiping.python.smart_router import SmartRouter, Provider
+from smart_router import SmartRouter, Provider
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

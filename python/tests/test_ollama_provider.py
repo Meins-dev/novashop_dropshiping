@@ -1,11 +1,11 @@
-"""
-test_ollama_provider.py
-Run: pytest python/tests/test_ollama_provider.py -v
-"""
-
+import os
+import sys
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from project_dropshiping.python.ollama_provider import (
+
+# Ensure tests can import the local ollama_provider module when running
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from ollama_provider import (
     normalize_ollama_model,
     anthropic_to_ollama_messages,
     ollama_chat,

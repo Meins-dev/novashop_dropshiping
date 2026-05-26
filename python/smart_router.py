@@ -1,29 +1,3 @@
-"""
-smart_router.py
----------------
-Intelligent auto-router for openclaude.
-
-Instead of always using one fixed provider, the smart router:
-- Pings all configured providers on startup
-- Scores them by latency, cost, and health
-- Routes each request to the optimal provider
-- Falls back automatically if a provider fails
-- Learns from real request timings over time
-
-Usage in server.py:
-    from smart_router import SmartRouter
-    router = SmartRouter()
-    await router.initialize()
-    result = await router.route(messages, model, stream)
-
-.env config:
-    ROUTER_MODE=smart          # or: fixed (default behaviour)
-    ROUTER_STRATEGY=latency    # or: cost, balanced
-    ROUTER_FALLBACK=true       # auto-retry on failure
-
-Contribution to: https://github.com/Gitlawb/openclaude
-"""
-
 import asyncio
 import logging
 import os
@@ -218,14 +192,32 @@ class SmartRouter:
         Pick the best available provider for this request.
         Returns None if no providers are available.
         """
-        available = [
-            p for p in self.providers
-            if p.healthy and p.is_configured
-        ]
+        available = [p for p in self.providers if p.healthy and p.is_configured]
         if not available:
             return None
 
-        return min(available, key=lambda p: p.score(self.strategy))
+        # Compute normalized scores across the available providers so latency
+        # and cost are comparable (0..1). This prevents units mismatch.
+        max_latency = max((p.avg_latency_ms for p in available), default=1.0)
+        max_cost = max((p.cost_per_1k_tokens for p in available), default=1.0)
+        # Avoid zero-division
+        if max_latency == 0:
+            max_latency = 1.0
+        if max_cost == 0:
+            max_cost = 1.0
+
+        def normalized_score(p: Provider) -> float:
+            latency_norm = p.avg_latency_ms / max_latency
+            cost_norm = p.cost_per_1k_tokens / max_cost
+            error_norm = p.error_rate  # already 0..1
+            if self.strategy == "latency":
+                return latency_norm + (error_norm * 5.0)
+            elif self.strategy == "cost":
+                return cost_norm + (error_norm * 5.0)
+            else:  # balanced
+                return (0.5 * latency_norm) + (0.5 * cost_norm) + (error_norm * 5.0)
+
+        return min(available, key=normalized_score)
 
     def get_model_for_provider(
         self,
@@ -293,7 +285,26 @@ class SmartRouter:
                 "Check your API keys and provider health."
             )
 
-        provider = min(available, key=lambda p: p.score(self.strategy))
+        # choose provider using normalized scoring (avoid unit mismatch)
+        max_latency = max((p.avg_latency_ms for p in available), default=1.0)
+        max_cost = max((p.cost_per_1k_tokens for p in available), default=1.0)
+        if max_latency == 0:
+            max_latency = 1.0
+        if max_cost == 0:
+            max_cost = 1.0
+
+        def normalized_score(p: Provider) -> float:
+            latency_norm = p.avg_latency_ms / max_latency
+            cost_norm = p.cost_per_1k_tokens / max_cost
+            error_norm = p.error_rate
+            if self.strategy == "latency":
+                return latency_norm + (error_norm * 5.0)
+            elif self.strategy == "cost":
+                return cost_norm + (error_norm * 5.0)
+            else:
+                return (0.5 * latency_norm) + (0.5 * cost_norm) + (error_norm * 5.0)
+
+        provider = min(available, key=normalized_score)
         model = self.get_model_for_provider(
             provider,
             claude_model,
@@ -361,6 +372,29 @@ class SmartRouter:
 
     def status(self) -> list[dict]:
         """Return current provider status for monitoring."""
+        # Compute normalized scores for display
+        available = [p for p in self.providers if p.healthy and p.is_configured]
+        max_latency = max((p.avg_latency_ms for p in available), default=1.0)
+        max_cost = max((p.cost_per_1k_tokens for p in available), default=1.0)
+        if max_latency == 0:
+            max_latency = 1.0
+        if max_cost == 0:
+            max_cost = 1.0
+
+        def display_score(p: Provider):
+            if not (p.healthy and p.is_configured):
+                return "N/A"
+            latency_norm = p.avg_latency_ms / max_latency
+            cost_norm = p.cost_per_1k_tokens / max_cost
+            err = p.error_rate
+            if self.strategy == "latency":
+                val = latency_norm + (err * 5.0)
+            elif self.strategy == "cost":
+                val = cost_norm + (err * 5.0)
+            else:
+                val = (0.5 * latency_norm) + (0.5 * cost_norm) + (err * 5.0)
+            return round(val, 3)
+
         return [
             {
                 "provider": p.name,
@@ -371,9 +405,7 @@ class SmartRouter:
                 "requests": p.request_count,
                 "errors": p.error_count,
                 "error_rate": f"{p.error_rate:.1%}",
-                "score": round(p.score(self.strategy), 3)
-                if p.healthy and p.is_configured
-                else "N/A",
+                "score": display_score(p),
             }
             for p in self.providers
         ]
