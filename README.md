@@ -80,15 +80,43 @@ pip install httpx pytest
 pytest -q
 ```
 
-4. Rode o backend localmente:
+5. Para deploy estático no Netlify, o backend será fornecido por uma função serverless em JavaScript; não é necessário executar `store.py` na hospedagem.
+
+6. Para desenvolvimento local com Netlify Dev:
 
 ```bash
-python store.py
+netlify dev
 ```
 
-5. Abra `index.html` no navegador ou sirva a pasta com um servidor HTTP simples para usar o frontend.
+7. Abra `index.html` no navegador ou acesse o site local gerado pelo Netlify Dev para testar o frontend com a função.
 
 6. Cadastre um usuário, faça login e finalize um pedido.
+
+## Deploy no Netlify
+
+- Site publicado: https://willowy-pixie-bf0716.netlify.app/
+
+Ao publicar no Netlify este repositório usa uma função serverless (JS) como backend, portanto não é necessário executar `store.py` na hospedagem.
+
+## Arquivos principais e o que fazem (resumo do que já foi feito)
+
+- `index.html`: frontend (HTML/JS) — atualizado para usar a função Netlify (`/.netlify/functions/store`), incluir UX de pagamento PIX (geração de chave/QR) e armazenar token `access_token` no `localStorage`.
+- `styles.css`: estilos do site — ajustado para posicionamento do logo na search-bar e estilo do QR PIX.
+- `store.py`: backend Python para desenvolvimento local — implementa APIs (auth, produtos, pedidos, frete, cupons) e migração JSON→DB; permanece para uso local, mas não é necessário em Netlify.
+- `netlify/functions/store.js`: função serverless (Node.js) — replica as mesmas APIs do `store.py` em JS para rodar no Netlify (prod). Testada localmente e responde `GET /api/products` com o catálogo.
+- `netlify.toml`: configuração de build/funções para Netlify (publica a raiz e aponta `functions` para `netlify/functions`).
+- `package.json`: define engine Node e scripts `start`/`dev` para `netlify dev`.
+- `_redirects`: redireciona todas as rotas para `index.html` (SPA routing) quando hospedado no Netlify.
+- `users.json`, `orders.json`: armazenamento simples usado antes da migração para DB/local persistência (mantidos para compatibilidade local).
+- `db.py` (quando presente): modelos SQLAlchemy e migração de dados em disco para SQLite — adicionada para quem optar por rodar o backend Python localmente.
+- `python/*`: código de suporte (provedores LLM, roteador inteligente, testes) — parte do propósito original do repositório para integração de IA.
+
+O que já estava sendo feito antes:
+- O projeto começou como um site estático que usava `store.py` com JSON em disco para autenticação e pedidos.
+- Em seguida, foi adicionada persistência via SQLite/SQLAlchemy (`db.py`) e migrações para suportar novos campos (ex.: `is_admin`).
+- Implementou-se autenticação com tokens, refresh tokens e `UserSession` para persistência de sessão em DB/local.
+- Foi criada a função Netlify (`netlify/functions/store.js`) para que o site pudesse ser hospedado sem executar `store.py` na plataforma.
+
 
 ## Organização do projeto
 
