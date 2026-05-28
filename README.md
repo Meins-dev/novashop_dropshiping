@@ -138,7 +138,9 @@ O que já estava sendo feito antes:
 - `ROUTER_STRATEGY` (valor padrão: `balanced`)
 - `ROUTER_FALLBACK` (valor padrão: `true`)
 
-## Por que este projeto?
+## Proposta de Segurança e Pentest
 
-Ele foi criado para aprender e experimentar com integrações de IA, arquiteturas assíncronas, autenticação backend e um fluxo de pedidos que exige login para finalizar a compra, tudo em um contexto simples de site de estudo de programação.
+Esta proposta consiste no desenvolvimento completo de uma aplicação web para, posteriormente, submetê-la a um rigoroso processo de testes de intrusão (pentesting). O objetivo central é validar de forma prática as competências em ambas as pontas do desenvolvimento: a capacidade de construir uma aplicação funcional e escalável e a habilidade de protegê-la contra vulnerabilidades reais.
+
+Como profissional formado em Cibersegurança, utilizarei este projeto para aplicar metodologias de hacking ético, simulando ataques para testar a eficácia das implementações de segurança adotadas durante a codificação. O ciclo de "construir para atacar" servirá como prova de conceito das minhas habilidades técnicas, demonstrando que sou capaz de não apenas criar software, mas de garantir que ele resista a tentativas de exploração, elevando o nível de robustez e resiliência da aplicação.
 
