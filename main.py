@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, status
+from fastapi import FastAPI, Depends, HTTPException, Header, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -8,12 +8,21 @@ import os
 import random
 from urllib.parse import parse_qs, urlparse
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 import db
 from db import (
     Product, Coupon, User, UserSession, Order, OrderItem, SessionLocal
 )
 
 app = FastAPI(title="NovaShop API", version="2.0")
+
+# --- Rate Limiting ---
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- Configuração de CORS ---
 app.add_middleware(
@@ -184,7 +193,8 @@ def sanitize_user(user) -> dict:
 # --- Rotas de Produtos ---
 
 @app.get("/api/products")
-def list_products(session: Session = Depends(db.get_db)):
+@limiter.limit("60/minute")
+def list_products(request: Request, session: Session = Depends(db.get_db)):
     """Lista todos os produtos com categorias."""
     products = session.query(Product).all()
     products_list = [
@@ -209,7 +219,8 @@ def list_products(session: Session = Depends(db.get_db)):
 
 
 @app.get("/api/products/{product_id}")
-def get_product(product_id: int, session: Session = Depends(db.get_db)):
+@limiter.limit("60/minute")
+def get_product(request: Request, product_id: int, session: Session = Depends(db.get_db)):
     """Retorna detalhes de um produto específico."""
     product = session.query(Product).get(product_id)
     if not product:
@@ -234,7 +245,8 @@ def get_product(product_id: int, session: Session = Depends(db.get_db)):
 # --- Rotas de Autenticação ---
 
 @app.post("/api/register", status_code=201)
-def register(data: dict, session: Session = Depends(db.get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, data: dict, session: Session = Depends(db.get_db)):
     """Registra novo usuário."""
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
@@ -279,7 +291,8 @@ def register(data: dict, session: Session = Depends(db.get_db)):
 
 
 @app.post("/api/login")
-def login(data: dict, session: Session = Depends(db.get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, data: dict, session: Session = Depends(db.get_db)):
     """Autentica usuário e cria sessão."""
     email = (data.get("email") or "").strip().lower()
     password = data.get("password", "")
@@ -385,7 +398,8 @@ def me(user: dict = Depends(get_current_user)):
 # --- Rotas de Frete e Cupons ---
 
 @app.get("/api/shipping")
-def get_shipping(zip: str = "", subtotal: float = 0.0):
+@limiter.limit("60/minute")
+def get_shipping(request: Request, zip: str = "", subtotal: float = 0.0):
     """Calcula frete baseado no CEP."""
     price, days, state = calc_shipping(zip)
     free = subtotal >= FREE_SHIPPING_MIN
@@ -400,7 +414,8 @@ def get_shipping(zip: str = "", subtotal: float = 0.0):
 
 
 @app.get("/api/coupons")
-def validate_coupon(code: str = "", subtotal: float = 0.0, session: Session = Depends(db.get_db)):
+@limiter.limit("60/minute")
+def validate_coupon(request: Request, code: str = "", subtotal: float = 0.0, session: Session = Depends(db.get_db)):
     """Valida cupom de desconto."""
     code = code.upper()
 
@@ -473,7 +488,9 @@ def answer_quiz(data: dict):
 # --- Rotas de Pedidos ---
 
 @app.post("/api/orders", status_code=201)
+@limiter.limit("10/minute")
 def create_order(
+    request: Request,
     data: dict,
     user: dict = Depends(get_current_user),
     session: Session = Depends(db.get_db)
