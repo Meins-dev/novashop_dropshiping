@@ -94,7 +94,7 @@ netlify dev
 
 ## Deploy no Netlify
 
-- Site publicado: https://willowy-pixie-bf0716.netlify.app/
+- Site publicado: https://novashopz.netlify.app/
 
 Ao publicar no Netlify este repositório usa uma função serverless (JS) como backend, portanto não é necessário executar `store.py` na hospedagem.
 
