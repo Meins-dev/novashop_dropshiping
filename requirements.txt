@@ -4,3 +4,5 @@ sqlalchemy==2.0.50
 python-dotenv==1.0.0
 httpx==0.28.1
 slowapi==0.1.9
+psycopg2-binary
+pytest>=7.0

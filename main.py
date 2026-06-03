@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlparse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from fastapi.staticfiles import StaticFiles
 
 import db
 from db import (
@@ -32,6 +33,15 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
+# Serve static assets (images, css, etc.)
+# Prefer `frontend/static` when present, otherwise fall back to root `static/`.
+base_dir = os.path.dirname(__file__)
+frontend_static_dir = os.path.join(base_dir, 'frontend', 'static')
+default_static_dir = os.path.join(base_dir, 'static')
+static_dir = frontend_static_dir if os.path.isdir(frontend_static_dir) else default_static_dir
+if os.path.isdir(static_dir):
+    app.mount('/static', StaticFiles(directory=static_dir), name='static')
+
 # --- Constantes ---
 FREE_SHIPPING_MIN = 199
 ACCESS_TOKEN_TTL = 15 * 60  # 15 minutos
@@ -41,19 +51,88 @@ REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60  # 7 dias
 PRODUCTS_DATA = [
     {
         "id": 1,
-        "name": "Fone Bluetooth TWS Pro",
-        "description": "Som hi-fi, cancelamento de ruído ativo, 30h de bateria com estojo carregador.",
-        "price": 79.90,
-        "original_price": 199.90,
-        "category": "Eletrônicos",
-        "emoji": "🎧",
-        "sold": 1247,
-        "rating": 4.7,
-        "reviews": 312,
-        "stock": 45,
-        "tags": ["frete gratis", "mais vendido"],
+        "name": "NEXUS Watch Pro X",
+        "description": "Smartwatch de última geração com display holográfico, processador IA integrado, monitoramento cardíaco 24/7 e 14 dias de bateria.",
+        "price": 2497.00,
+        "original_price": 3299.00,
+        "category": "SMARTWATCH",
+        "emoji": "⌚",
+        "sold": 847,
+        "rating": 4.9,
+        "reviews": 847,
+        "stock": 15,
+        "tags": ["novo", "premium", "frete gratis"],
     },
-    # ... (adicione todos os produtos aqui ou carregue do DB)
+    {
+        "id": 2,
+        "name": "AirPulse Neural Pro",
+        "description": "Earbuds com cancelamento ativo neural, IA de equalização adaptativa, 48h de bateria com case. Som hi-fi studio quality.",
+        "price": 1189.00,
+        "original_price": 1599.00,
+        "category": "EARBUDS",
+        "emoji": "🎧",
+        "sold": 2341,
+        "rating": 4.8,
+        "reviews": 2341,
+        "stock": 42,
+        "tags": ["top", "mais vendido", "frete gratis"],
+    },
+    {
+        "id": 3,
+        "name": "HoloLens Vision 4",
+        "description": "Headset AR avançado com display holográfico 4K, rastreamento ocular em 360°, processador quantum-ready, compatível com Windows.",
+        "price": 8990.00,
+        "original_price": 11500.00,
+        "category": "AR HEADSET",
+        "emoji": "🥽",
+        "sold": 312,
+        "rating": 4.9,
+        "reviews": 312,
+        "stock": 8,
+        "tags": ["limited edition", "tecnologia"],
+    },
+    {
+        "id": 4,
+        "name": "QuantumPad Ultra",
+        "description": "Tablet OLED 12.9\" com processador ARM v9, 16GB RAM, 1TB SSD. Compatível com stylus neural e teclado magnético.",
+        "price": 4799.00,
+        "original_price": 5999.00,
+        "category": "TABLET",
+        "emoji": "📱",
+        "sold": 1203,
+        "rating": 4.7,
+        "reviews": 1203,
+        "stock": 22,
+        "tags": ["premium", "frete gratis"],
+    },
+    {
+        "id": 5,
+        "name": "FusionKey Mech Pro",
+        "description": "Teclado mecânico RGB com switches hot-swap, design ergonômico, conectividade tri-modo (USB-C, 2.4GHz, Bluetooth). Ideal para gamers.",
+        "price": 1890.00,
+        "original_price": 2499.00,
+        "category": "TECLADO",
+        "emoji": "⌨️",
+        "sold": 756,
+        "rating": 4.8,
+        "reviews": 756,
+        "stock": 35,
+        "tags": ["gamer", "limited edition"],
+    },
+    {
+        "id": 6,
+        "name": "NeuroLink Band 3",
+        "description": "Pulseira biométrica com sensor IA, rastreia 50+ métricas de saúde, processamento neural local, bateria 30 dias. Compatível com iOS/Android.",
+        "price": 3299.00,
+        "original_price": 4199.00,
+        "category": "BIOMÉTRICO",
+        "emoji": "💪",
+        "sold": 589,
+        "rating": 4.9,
+        "reviews": 589,
+        "stock": 28,
+        "tags": ["ia integrada", "saúde"],
+    }
 ]
 
 COUPONS_DATA = {
@@ -197,8 +276,17 @@ def sanitize_user(user) -> dict:
 def list_products(request: Request, session: Session = Depends(db.get_db)):
     """Lista todos os produtos com categorias."""
     products = session.query(Product).all()
-    products_list = [
-        {
+    products_list = []
+    for p in products:
+        # prefer a per-product static file, fall back to default image
+        product_img_path = os.path.join(static_dir, 'images', 'products', f"{p.id}.svg") if 'static' in globals() else None
+        if product_img_path and os.path.exists(product_img_path):
+            img_url = request.url_for('static', path=f'images/products/{p.id}.svg')
+        else:
+            # default placeholder
+            img_url = request.url_for('static', path='images/products/default.svg') if os.path.exists(os.path.join(static_dir, 'images', 'products', 'default.svg')) else f"/static/images/products/{p.id}.svg"
+
+        products_list.append({
             "id": p.id,
             "name": p.name,
             "description": p.description,
@@ -211,11 +299,31 @@ def list_products(request: Request, session: Session = Depends(db.get_db)):
             "reviews": p.reviews,
             "stock": p.stock,
             "tags": p.tags or [],
-        }
-        for p in products
-    ]
+            "image": img_url,
+        })
     categories = sorted(set(p["category"] for p in products_list if p.get("category")))
     return {"products": products_list, "categories": categories}
+
+
+@app.get('/api/users')
+def list_users(request: Request, session: Session = Depends(db.get_db)):
+    """Lista usuários com foto de perfil."""
+    users = session.query(User).all()
+    out = []
+    for u in users:
+        profile_path = os.path.join(static_dir, 'images', 'profiles', f"{u.id}.svg")
+        if os.path.exists(profile_path):
+            photo = request.url_for('static', path=f'images/profiles/{u.id}.svg')
+        else:
+            photo = request.url_for('static', path='images/profiles/default.svg') if os.path.exists(os.path.join(static_dir, 'images', 'profiles', 'default.svg')) else f"/static/images/profiles/{u.id}.svg"
+        out.append({
+            'id': u.id,
+            'name': u.name,
+            'email': u.email,
+            'is_admin': bool(u.is_admin),
+            'photo': photo,
+        })
+    return {'users': out}
 
 
 @app.get("/api/products/{product_id}")
