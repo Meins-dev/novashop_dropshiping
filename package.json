@@ -2,15 +2,9 @@
   "name": "project_dropshiping",
   "version": "1.0.0",
   "private": true,
-  "engines": {
-    "node": "18.x"
-  },
   "scripts": {
-    "start": "netlify dev",
-    "dev": "netlify dev",
+    "start": "echo 'Start command'",
+    "dev": "echo 'Dev command'",
     "build": "echo 'Build complete'"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.0.0"
   }
 }
