@@ -115,6 +115,15 @@ class OrderItem(Base):
     order = relationship("Order", back_populates="items")
 
 
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    product_id = Column(Integer, nullable=False)
+    quantity = Column(Integer, default=1)
+
+
+
 def init_db():
     """Create DB file, missing columns, and tables if they don't exist."""
     inspector = inspect(ENGINE)

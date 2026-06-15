@@ -42,6 +42,11 @@ static_dir = frontend_static_dir if os.path.isdir(frontend_static_dir) else defa
 if os.path.isdir(static_dir):
     app.mount('/static', StaticFiles(directory=static_dir), name='static')
 
+# Serve frontend HTML files (index.html, about.html, cart.html, etc.)
+frontend_dir = os.path.join(base_dir, 'frontend')
+if os.path.isdir(frontend_dir):
+    app.mount('/', StaticFiles(directory=frontend_dir, html=True), name='frontend')
+
 # --- Constantes ---
 FREE_SHIPPING_MIN = 199
 ACCESS_TOKEN_TTL = 15 * 60  # 15 minutos
@@ -273,9 +278,14 @@ def sanitize_user(user) -> dict:
 
 @app.get("/api/products")
 @limiter.limit("60/minute")
-def list_products(request: Request, session: Session = Depends(db.get_db)):
-    """Lista todos os produtos com categorias."""
-    products = session.query(Product).all()
+def list_products(request: Request, q: Optional[str] = None, session: Session = Depends(db.get_db)):
+    """Lista todos os produtos com categorias, com suporte a busca."""
+    query = session.query(Product)
+    if q:
+        from sqlalchemy import or_
+        query = query.filter(or_(Product.name.ilike(f"%{q}%"), Product.description.ilike(f"%{q}%")))
+
+    products = query.all()
     products_list = []
     for p in products:
         # prefer a per-product static file, fall back to default image
@@ -503,6 +513,86 @@ def me(user: dict = Depends(get_current_user)):
     return {"user": user}
 
 
+@app.get("/api/my-orders")
+def get_my_orders(user: dict = Depends(get_current_user), session: Session = Depends(db.get_db)):
+    """Retorna o histórico de pedidos do usuário autenticado."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Não autenticado")
+
+    orders = session.query(Order).filter(
+        (Order.customer_email == user["email"]) | (Order.customer_cpf == user["cpf"])
+    ).order_by(Order.created_at.desc()).all()
+
+    return {
+        "orders": [
+            {
+                "id": o.id,
+                "total": o.total,
+                "status": o.status,
+                "created_at": o.created_at.isoformat() if o.created_at else None,
+            } for o in orders
+        ]
+    }
+
+
+@app.get("/api/cart")
+def get_cart(user: dict = Depends(get_current_user), session: Session = Depends(db.get_db)):
+    """Retorna os itens do carrinho do usuário."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
+
+    items = session.query(db.CartItem).filter_by(user_id=user["id"]).all()
+    products_map = {p.id: p for p in session.query(Product).all()}
+
+    return {
+        "items": [
+            {
+                "id": it.product_id,
+                "name": products_map.get(it.product_id).name if products_map.get(it.product_id) else "Produto removido",
+                "price": products_map.get(it.product_id).price if products_map.get(it.product_id) else 0,
+                "qty": it.quantity,
+            } for it in items
+        ]
+    }
+
+
+@app.post("/api/cart")
+def add_to_cart(data: dict, user: dict = Depends(get_current_user), session: Session = Depends(db.get_db)):
+    """Adiciona ou atualiza item no carrinho do banco."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
+
+    product_id = data.get("id")
+    qty = data.get("qty", 1)
+    if not product_id:
+        raise HTTPException(status_code=400, detail="ID do produto é obrigatório")
+
+    item = session.query(db.CartItem).filter_by(user_id=user["id"], product_id=product_id).first()
+    if item:
+        item.quantity += qty
+    else:
+        item = db.CartItem(user_id=user["id"], product_id=product_id, quantity=qty)
+        session.add(item)
+
+    session.commit()
+    return {"message": "Carrinho atualizado"}
+
+
+@app.delete("/api/cart/{product_id}")
+def remove_from_cart(product_id: int, user: dict = Depends(get_current_user), session: Session = Depends(db.get_db)):
+    """Remove item do carrinho."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão expirada")
+
+    item = session.query(db.CartItem).filter_by(user_id=user["id"], product_id=product_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item não encontrado no carrinho")
+
+    session.delete(item)
+    session.commit()
+    return {"message": "Item removido"}
+
+
 # --- Rotas de Frete e Cupons ---
 
 @app.get("/api/shipping")
@@ -690,6 +780,11 @@ def create_order(
 
     session.commit()
 
+    # Limpar carrinho do banco se existir
+    if user:
+        session.query(db.CartItem).filter_by(user_id=user["id"]).delete()
+        session.commit()
+
     return {
         "order_id": order_obj.id,
         "total": order_obj.total,
@@ -759,7 +854,7 @@ def create_product(
     """Cria novo produto (admin)."""
     if not user:
         raise HTTPException(status_code=401, detail="Autenticação necessária")
-    
+
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Acesso negado")
 
@@ -780,6 +875,48 @@ def create_product(
     session.commit()
 
     return {"id": product.id, "message": "Produto criado."}
+
+
+@app.put("/api/products/{product_id}")
+def update_product(
+    product_id: int,
+    data: dict,
+    user: dict = Depends(get_current_user),
+    session: Session = Depends(db.get_db)
+):
+    """Atualiza produto (admin)."""
+    if not user or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Acesso negado")
+
+    product = session.query(Product).get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    for key, value in data.items():
+        if hasattr(product, key):
+            setattr(product, key, value)
+
+    session.commit()
+    return {"message": "Produto atualizado com sucesso"}
+
+
+@app.delete("/api/products/{product_id}")
+def delete_product(
+    product_id: int,
+    user: dict = Depends(get_current_user),
+    session: Session = Depends(db.get_db)
+):
+    """Remove produto (admin)."""
+    if not user or not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Acesso negado")
+
+    product = session.query(Product).get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    session.delete(product)
+    session.commit()
+    return {"message": "Produto removido com sucesso"}
 
 
 # --- Event Handlers ---

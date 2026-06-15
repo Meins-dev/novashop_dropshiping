@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Minha Conta — NEXUS</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .account-container {
+      max-width: 1000px;
+      margin: 8rem auto 4rem;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 3rem;
+    }
+    .profile-card {
+      background: var(--glass);
+      border: 1px solid var(--glassborder);
+      border-radius: 24px;
+      padding: 2rem;
+      text-align: center;
+      backdrop-filter: blur(24px);
+    }
+    .profile-avatar {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, var(--v2), var(--v3));
+      border-radius: 50%;
+      margin: 0 auto 1.5rem;
+      display: grid; place-items: center;
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 800;
+      color: white;
+      box-shadow: var(--glow2);
+    }
+    .profile-info {
+      text-align: left;
+      margin-top: 2rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .info-item {
+      display: flex; flex-direction: column;
+      gap: .2rem;
+      border-bottom: 1px solid var(--glassborder);
+      padding-bottom: .5rem;
+    }
+    .info-label {
+      font-size: .7rem; color: var(--g3);
+      font-family: var(--font-mono); text-transform: uppercase;
+    }
+    .info-value {
+      font-size: .9rem; color: var(--w); font-weight: 500;
+    }
+    .orders-section {
+      display: flex; flex-direction: column; gap: 2rem;
+    }
+    .orders-list {
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .order-card {
+      background: var(--glass);
+      border: 1px solid var(--glassborder);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all .3s;
+      cursor: pointer;
+    }
+    .order-card:hover {
+      border-color: var(--v3);
+      background: rgba(139,92,246,0.05);
+      transform: translateX(5px);
+    }
+    .order-main { display: flex; flex-direction: column; gap: .3rem; }
+    .order-id { font-family: var(--font-mono); font-size: .8rem; color: var(--v5); }
+    .order-date { font-size: .75rem; color: var(--g3); }
+    .order-total { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+    .order-status {
+      font-size: .7rem; padding: .3rem .8rem;
+      border-radius: 20px; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glassborder);
+      text-transform: uppercase;
+    }
+    .status-pending { color: #F59E0B; }
+    .status-completed { color: #10B981; }
+
+    @media (max-width: 800px) {
+      .account-container { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header id="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1L13 4V10L7 13L1 10V4L7 1Z" stroke="#A855F7" stroke-width="1.2" fill="rgba(168,85,247,.15)"/>
+          <path d="M7 4V10M4 5.5L10 8.5" stroke="#A855F7" stroke-width="1"/>
+        </svg>
+      </div>
+      NEXUS
+    </div>
+    <nav>
+      <a href="index.html">Produtos</a>
+      <a href="index.html#destaques">Destaques</a>
+      <a href="index.html#tecnologia">Tecnologia</a>
+      <a href="about.html">Sobre</a>
+    </nav>
+    <div class="header-actions" id="header-actions">
+      <div class="search-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Buscar produtos...">
+      </div>
+      <a class="cart-btn" href="cart.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2hh14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="cart-badge">0</span>
+      </a>
+      <a class="cta-sm" href="login.html">Entrar</a>
+    </div>
+  </header>
+
+  <main class="account-container">
+    <aside class="profile-card">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <h2 id="profile-name" style="font-family: var(--font-display); margin-bottom: 1rem;">Carregando...</h2>
+      <div class="profile-info">
+        <div class="info-item">
+          <span class="info-label">E-mail</span>
+          <span class="info-value" id="profile-email">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">CPF</span>
+          <span class="info-value" id="profile-cpf">-</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Endereço</span>
+          <span class="info-value" id="profile-address">-</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="orders-section">
+      <h1 style="font-family: var(--font-display); font-weight: 800; font-size: 2rem;">Meus <span style="background:linear-gradient(135deg,var(--v3),var(--v5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Pedidos</span></h1>
+      <div class="orders-list" id="orders-list">
+        <!-- Orders injected by JS -->
+        <div class="order-card" style="justify-content: center; color: var(--g3);">
+          Nenhum pedido encontrado.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function initAccount() {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        // Fetch Profile
+        const meRes = await fetch('/api/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!meRes.ok) throw new Error('Sessão expirada');
+        const { user } = await meRes.json();
+
+        document.getElementById('profile-name').textContent = user.name;
+        document.getElementById('profile-email').textContent = user.email;
+        document.getElementById('profile-cpf').textContent = user.cpf || 'Não informado';
+        document.getElementById('profile-address').textContent = user.address || 'Não informado';
+        document.getElementById('profile-avatar').textContent = user.name.charAt(0).toUpperCase();
+
+        // Update Header for Authenticated User
+        const cta = document.querySelector('.cta-sm');
+        if (cta) {
+          const wrap = document.createElement('div');
+          wrap.style.display = 'flex'; wrap.style.gap = '0.6rem'; wrap.style.alignItems = 'center';
+          const name = document.createElement('div');
+          name.textContent = user.name;
+          name.style.fontWeight = '600';
+          name.style.color = 'var(--w)';
+          const logout = document.createElement('a');
+          logout.href = '#';
+          logout.textContent = 'Sair';
+          logout.style.color = 'var(--g3)';
+          logout.style.textDecoration = 'none';
+          logout.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await fetch('/api/logout', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            localStorage.clear();
+            window.location.href = 'index.html';
+          });
+          wrap.appendChild(name); wrap.appendChild(logout);
+          cta.replaceWith(wrap);
+        }
+
+        // Fetch Orders
+        const ordersRes = await fetch('/api/my-orders', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const { orders } = await ordersRes.json();
+
+        const list = document.getElementById('orders-list');
+        if (orders && orders.length > 0) {
+          list.innerHTML = orders.map(o => `
+            <div class="order-card" onclick="window.location.href='track.html?id=${o.id}'">
+              <div class="order-main">
+                <span class="order-id">#${o.id}</span>
+                <span class="order-date">${new Date(o.created_at).toLocaleDateString('pt-BR')}</span>
+              </div>
+              <div class="order-total">R$ ${o.total.toFixed(2)}</div>
+              <div class="order-status status-${o.status === 'pending_payment' ? 'pending' : 'completed'}">
+                ${o.status === 'pending_payment' ? 'Aguardando Pagamento' : 'Concluído'}
+              </div>
+            </div>
+          `).join('');
+        }
+
+      } catch (e) {
+        console.error(e);
+        window.location.href = 'login.html';
+      }
+    }
+
+    initAccount();
+  </script>
+</body>
+</html>
