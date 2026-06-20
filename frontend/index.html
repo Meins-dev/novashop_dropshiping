@@ -951,7 +951,7 @@ opacity:.4;
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
       <span class="cart-badge">0</span>
     </a>
-    <a class="cta-sm" href="login.html">Entrar</a>
+    <a class="cta-sm" href="nexus-register.html">Criar Conta</a>
   </div>
 </header>
 
@@ -1546,6 +1546,370 @@ opacity:.4;
   </div>
 </footer>
 
+<!-- ============================================================ -->
+<!-- QUICK VIEW MODAL                                            -->
+<!-- ============================================================ -->
+<div id="qv-backdrop" onclick="closeQuickView()" style="
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;
+  transition:opacity .4s ease,visibility .4s ease;
+"></div>
+
+<div id="qv-modal" role="dialog" aria-modal="true" aria-label="Detalhes do produto" style="
+  position:fixed;inset:0;z-index:2001;
+  display:flex;align-items:center;justify-content:center;
+  padding:1rem;pointer-events:none;
+">
+  <div id="qv-panel" style="
+    width:100%;max-width:960px;max-height:92vh;
+    background:linear-gradient(145deg,#0d0d0d,#0a0a0a);
+    border:1px solid rgba(139,92,246,.25);border-radius:24px;
+    overflow:hidden;display:grid;grid-template-columns:1fr 1fr;
+    transform:translateY(28px) scale(.97);opacity:0;
+    transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .35s ease;
+    box-shadow:0 40px 120px rgba(0,0,0,.7),0 0 0 1px rgba(139,92,246,.1),0 0 80px rgba(139,92,246,.08);
+    pointer-events:all;position:relative;
+  ">
+
+    <!-- Close button -->
+    <button onclick="closeQuickView()" style="
+      position:absolute;top:16px;right:16px;z-index:10;
+      width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+      background:rgba(0,0,0,.6);backdrop-filter:blur(8px);
+      color:#9CA3AF;cursor:pointer;display:grid;place-items:center;
+      transition:all .25s;
+    " onmouseenter="this.style.borderColor='rgba(139,92,246,.5)';this.style.color='#fff'"
+       onmouseleave="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='#9CA3AF'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <!-- LEFT — Product visual -->
+    <div id="qv-left" style="
+      position:relative;background:linear-gradient(145deg,#0f0f14,#0a0a10);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:460px;overflow:hidden;
+    ">
+      <!-- Background glow -->
+      <div id="qv-glow" style="
+        position:absolute;width:320px;height:320px;border-radius:50%;
+        background:radial-gradient(ellipse,rgba(139,92,246,.2) 0%,transparent 70%);
+        animation:qvpulse 3s ease-in-out infinite;pointer-events:none;
+      "></div>
+
+      <!-- Grid lines -->
+      <div style="
+        position:absolute;inset:0;
+        background-image:linear-gradient(rgba(139,92,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.04) 1px,transparent 1px);
+        background-size:40px 40px;
+        mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 80%);
+      "></div>
+
+      <!-- Product image / emoji -->
+      <div id="qv-img-wrap" style="position:relative;z-index:2;padding:2rem;text-align:center">
+        <div id="qv-emoji" style="
+          font-size:7rem;line-height:1;
+          filter:drop-shadow(0 0 30px rgba(139,92,246,.5));
+          animation:qvfloat 5s ease-in-out infinite;
+          display:block;
+        "></div>
+        <img id="qv-img" src="" alt="" style="
+          max-width:240px;max-height:240px;object-fit:contain;display:none;
+          filter:drop-shadow(0 20px 50px rgba(139,92,246,.35));
+          animation:qvfloat 5s ease-in-out infinite;
+        ">
+      </div>
+
+      <!-- Orbiting ring -->
+      <div style="
+        position:absolute;width:280px;height:280px;border-radius:50%;
+        border:1px dashed rgba(139,92,246,.15);
+        animation:qvorbit 18s linear infinite;pointer-events:none;
+      "></div>
+
+      <!-- Tags row -->
+      <div id="qv-tags" style="
+        position:absolute;bottom:20px;left:0;right:0;
+        display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;padding:0 1rem;
+      "></div>
+
+      <!-- Stock indicator -->
+      <div id="qv-stock-bar" style="
+        position:absolute;top:20px;left:20px;
+        background:rgba(0,0,0,.7);backdrop-filter:blur(8px);
+        border:1px solid rgba(255,255,255,.08);border-radius:10px;
+        padding:.4rem .8rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;
+        display:flex;align-items:center;gap:.5rem;color:#9CA3AF;
+      ">
+        <span id="qv-stock-dot" style="width:6px;height:6px;border-radius:50%;background:#10B981;box-shadow:0 0 6px #10B981;flex-shrink:0"></span>
+        <span id="qv-stock-txt">— em estoque</span>
+      </div>
+    </div>
+
+    <!-- RIGHT — Product info -->
+    <div style="
+      overflow-y:auto;padding:2rem 2rem 2rem 1.75rem;
+      display:flex;flex-direction:column;gap:1.25rem;
+    ">
+      <!-- Category + badge -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap">
+        <div id="qv-cat" style="
+          font-family:'JetBrains Mono',monospace;font-size:.65rem;
+          color:#C4B5FD;letter-spacing:.14em;text-transform:uppercase;
+          background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);
+          border-radius:20px;padding:.25rem .75rem;
+        "></div>
+        <div id="qv-badge" style="
+          font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.06em;
+          background:linear-gradient(135deg,#7C3AED,#A855F7);
+          border-radius:8px;padding:.25rem .7rem;color:#fff;
+          box-shadow:0 4px 12px rgba(124,58,237,.4);display:none;
+        "></div>
+      </div>
+
+      <!-- Name -->
+      <h2 id="qv-name" style="
+        font-family:'Syne',sans-serif;font-weight:800;
+        font-size:clamp(1.3rem,2.5vw,1.7rem);line-height:1.15;letter-spacing:-.02em;
+        color:#fff;
+      "></h2>
+
+      <!-- Stars + reviews + sold -->
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="display:flex;gap:2px" id="qv-stars"></div>
+        <span id="qv-rating-num" style="font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#C4B5FD;font-weight:600"></span>
+        <span id="qv-reviews" style="font-size:.75rem;color:#6B7280"></span>
+        <span style="color:#374151">·</span>
+        <span id="qv-sold" style="font-size:.75rem;color:#6B7280"></span>
+      </div>
+
+      <!-- Price block -->
+      <div style="
+        background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.15);
+        border-radius:16px;padding:1rem 1.2rem;
+        display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+      ">
+        <div>
+          <div id="qv-price" style="
+            font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;
+            background:linear-gradient(135deg,#fff,#C4B5FD);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+            line-height:1;
+          "></div>
+          <div id="qv-old-price" style="font-size:.8rem;color:#6B7280;text-decoration:line-through;margin-top:.2rem"></div>
+          <div id="qv-installment" style="font-size:.72rem;color:#9CA3AF;margin-top:.15rem"></div>
+        </div>
+        <div id="qv-discount-pill" style="
+          background:linear-gradient(135deg,#059669,#10B981);
+          border-radius:10px;padding:.35rem .8rem;
+          font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;
+          color:#fff;box-shadow:0 4px 12px rgba(5,150,105,.35);display:none;
+        "></div>
+      </div>
+
+      <!-- Tabs -->
+      <div>
+        <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:1rem">
+          <button class="qv-tab active" data-tab="desc" onclick="qvTab(this,'desc')" style="
+            padding:.55rem 1.1rem;background:none;border:none;
+            font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:500;
+            letter-spacing:.08em;color:#6B7280;cursor:pointer;
+            border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .25s;
+          ">DESCRIÇÃO</button>
+          <button class="qv-tab" data-tab="specs" onclick="qvTab(this,'specs')" style="
+            padding:.55rem 1.1rem;background:none;border:none;
+            font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:500;
+            letter-spacing:.08em;color:#6B7280;cursor:pointer;
+            border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .25s;
+          ">SPECS</button>
+          <button class="qv-tab" data-tab="ship" onclick="qvTab(this,'ship')" style="
+            padding:.55rem 1.1rem;background:none;border:none;
+            font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:500;
+            letter-spacing:.08em;color:#6B7280;cursor:pointer;
+            border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .25s;
+          ">ENTREGA</button>
+        </div>
+
+        <div id="qv-tab-desc" class="qv-tabpane" style="animation:qvtabfade .3s ease">
+          <p id="qv-desc" style="font-size:.88rem;color:#9CA3AF;line-height:1.75"></p>
+        </div>
+        <div id="qv-tab-specs" class="qv-tabpane" style="display:none;animation:qvtabfade .3s ease">
+          <div id="qv-specs-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem"></div>
+        </div>
+        <div id="qv-tab-ship" class="qv-tabpane" style="display:none;animation:qvtabfade .3s ease">
+          <div style="display:flex;flex-direction:column;gap:.65rem">
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.7rem;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:10px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:#10B981">Frete Grátis</div>
+                <div style="font-size:.7rem;color:#6B7280">Em pedidos acima de R$&nbsp;199</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.7rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:#fff">Entrega Nacional</div>
+                <div style="font-size:.7rem;color:#6B7280">SP 3 dias · RJ 5 dias · Outros até 10 dias</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.7rem;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;color:#fff">Garantia 12 meses</div>
+                <div style="font-size:.7rem;color:#6B7280">Troca sem burocracia</div>
+              </div>
+            </div>
+
+            <!-- CEP checker -->
+            <div style="margin-top:.25rem;display:flex;gap:.5rem">
+              <input id="qv-cep" type="text" placeholder="00000-000" maxlength="9"
+                oninput="maskQvCep(this)"
+                style="
+                  flex:1;background:rgba(10,10,10,.8);border:1px solid rgba(255,255,255,.08);border-radius:10px;
+                  padding:.65rem 1rem;color:#fff;font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;
+                  transition:border-color .3s,box-shadow .3s;
+                "
+                onfocus="this.style.borderColor='rgba(139,92,246,.5)';this.style.boxShadow='0 0 0 3px rgba(139,92,246,.1)'"
+                onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.boxShadow='none'"
+              >
+              <button onclick="calcQvShipping()" style="
+                background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(139,92,246,.15));
+                border:1px solid rgba(139,92,246,.3);border-radius:10px;
+                padding:.65rem 1rem;color:#C4B5FD;
+                font-family:'Syne',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.04em;
+                cursor:pointer;white-space:nowrap;transition:all .3s;
+              " onmouseenter="this.style.background='linear-gradient(135deg,#7C3AED,#A855F7)';this.style.color='#fff'"
+                onmouseleave="this.style.background='linear-gradient(135deg,rgba(124,58,237,.2),rgba(139,92,246,.15))';this.style.color='#C4B5FD'">
+                Calcular
+              </button>
+            </div>
+            <div id="qv-ship-result" style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#9CA3AF;min-height:18px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Qty + CTA -->
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <div style="
+          display:flex;align-items:center;
+          background:rgba(10,10,10,.8);border:1px solid rgba(255,255,255,.08);border-radius:12px;
+          overflow:hidden;
+        ">
+          <button onclick="qvQty(-1)" style="
+            width:40px;height:44px;background:none;border:none;color:#9CA3AF;
+            font-size:1.2rem;cursor:pointer;transition:color .2s;
+          " onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='#9CA3AF'">−</button>
+          <span id="qv-qty" style="
+            min-width:36px;text-align:center;
+            font-family:'JetBrains Mono',monospace;font-size:.85rem;color:#fff;font-weight:600;
+          ">1</span>
+          <button onclick="qvQty(1)" style="
+            width:40px;height:44px;background:none;border:none;color:#9CA3AF;
+            font-size:1.2rem;cursor:pointer;transition:color .2s;
+          " onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='#9CA3AF'">+</button>
+        </div>
+
+        <button id="qv-cart-btn" onclick="qvAddToCart()" style="
+          flex:1;min-width:160px;
+          background:linear-gradient(135deg,#7C3AED,#A855F7);
+          border:none;border-radius:14px;height:44px;
+          color:#fff;font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.05em;
+          cursor:pointer;position:relative;overflow:hidden;
+          transition:all .35s cubic-bezier(.34,1.56,.64,1);
+          box-shadow:0 8px 25px rgba(124,58,237,.35);
+          display:flex;align-items:center;justify-content:center;gap:.5rem;
+        ">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span id="qv-cart-txt">Adicionar ao Carrinho</span>
+        </button>
+
+        <button id="qv-wish-btn" title="Salvar" style="
+          width:44px;height:44px;
+          background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+          border-radius:12px;cursor:pointer;display:grid;place-items:center;
+          transition:all .3s;color:#6B7280;
+        " onmouseenter="this.style.borderColor='rgba(239,68,68,.4)';this.style.color='#F87171'"
+           onmouseleave="this.style.borderColor='rgba(255,255,255,.08)';this.style.color='#6B7280'"
+           onclick="this.style.color='#F87171';this.style.borderColor='rgba(239,68,68,.4)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+
+      <!-- Trust row -->
+      <div style="
+        display:flex;gap:1rem;flex-wrap:wrap;
+        padding-top:.85rem;border-top:1px solid rgba(255,255,255,.05);
+      ">
+        <span style="display:flex;align-items:center;gap:.35rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#374151">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Pagamento seguro
+        </span>
+        <span style="display:flex;align-items:center;gap:.35rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#374151">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Garantia 12 meses
+        </span>
+        <span style="display:flex;align-items:center;gap:.35rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#374151">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          Produto original
+        </span>
+      </div>
+
+      <!-- Loading skeleton (hidden by default) -->
+      <div id="qv-skeleton" style="display:none;flex-direction:column;gap:.75rem">
+        <div style="height:18px;background:rgba(255,255,255,.05);border-radius:6px;width:40%;animation:qvskel 1.2s ease infinite alternate"></div>
+        <div style="height:28px;background:rgba(255,255,255,.05);border-radius:6px;width:75%;animation:qvskel 1.2s ease .1s infinite alternate"></div>
+        <div style="height:14px;background:rgba(255,255,255,.05);border-radius:6px;width:55%;animation:qvskel 1.2s ease .2s infinite alternate"></div>
+        <div style="height:70px;background:rgba(255,255,255,.04);border-radius:12px;animation:qvskel 1.2s ease .3s infinite alternate"></div>
+        <div style="height:44px;background:rgba(139,92,246,.08);border-radius:14px;animation:qvskel 1.2s ease .4s infinite alternate"></div>
+      </div>
+    </div><!-- /right -->
+  </div><!-- /panel -->
+</div><!-- /modal -->
+
+<!-- Quick View global CSS (keyframes + tab style) -->
+<style>
+@keyframes qvpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.12)}}
+@keyframes qvfloat{0%,100%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-14px) rotateY(6deg)}}
+@keyframes qvorbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes qvtabfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes qvskel{from{opacity:.4}to{opacity:.8}}
+@keyframes qvtoast{0%{opacity:0;transform:translate(-50%,10px)}15%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-6px)}}
+
+#qv-backdrop.qv-open{opacity:1;visibility:visible}
+#qv-modal.qv-open #qv-panel{transform:none;opacity:1}
+
+.qv-tab{font-family:'JetBrains Mono',monospace!important}
+.qv-tab.active{color:#C4B5FD!important;border-bottom-color:#A855F7!important}
+.qv-tab:hover:not(.active){color:#9CA3AF!important}
+
+.qv-spec-item{
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);border-radius:8px;
+  padding:.5rem .7rem;
+}
+.qv-spec-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:#6B7280;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.2rem}
+.qv-spec-val{font-size:.78rem;color:#E5E7EB;font-weight:500}
+
+#qv-toast{
+  position:fixed;bottom:6rem;left:50%;transform:translate(-50%,10px);
+  background:rgba(10,10,10,.95);border:1px solid rgba(139,92,246,.4);border-radius:14px;
+  padding:.75rem 1.4rem;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:600;
+  display:flex;align-items:center;gap:.6rem;z-index:3000;pointer-events:none;opacity:0;
+  box-shadow:0 8px 30px rgba(0,0,0,.5),var(--glow);
+}
+#qv-toast svg{flex-shrink:0}
+
+@media(max-width:700px){
+  #qv-panel{grid-template-columns:1fr!important;max-height:95vh}
+  #qv-left{min-height:220px!important}
+}
+</style>
+
+<!-- Toast element -->
+<div id="qv-toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="qv-toast-txt">Adicionado ao carrinho!</span>
+</div>
+
 <!-- Floating Nav -->
 <div class="float-nav" id="floatNav">
   <div class="float-nav-item active" onclick="scrollTo('hero')">Início</div>
@@ -1671,15 +2035,69 @@ const products = [
   }
 ];
 
-// =================== RENDER PRODUCTS ===================
-function renderStars(rating) {
-  const full = Math.floor(rating);
-  return Array.from({length:5},(_,i)=>`<span class="star" style="${i<full?'':'opacity:.3'}">${i<full?'★':'★'}</span>`).join('');
+
+
+let currentProductId = null;
+
+function openProductModal(product) {
+  currentProductId = product.id;
+
+  document.getElementById('modalImage').src = product.image || '/static/images/products/default.svg';
+  document.getElementById('modalCategory').textContent = product.category || 'NEXUS';
+  document.getElementById('modalName').textContent = product.name;
+  document.getElementById('modalPrice').textContent = `R$ ${Number(product.price).toFixed(2)}`;
+  document.getElementById('modalOldPrice').textContent = product.original_price ? 
+    `R$ ${Number(product.original_price).toFixed(2)}` : '';
+  
+  document.getElementById('modalDescription').innerHTML = product.description || 
+    "Produto premium com tecnologia de ponta da NEXUS.";
+
+  const rating = Math.floor(product.rating || 5);
+  document.getElementById('modalStars').innerHTML = '★'.repeat(rating);
+  document.getElementById('modalReviews').textContent = `(${product.reviews || 0} avaliações)`;
+
+  const modal = document.getElementById('productModal');
+  modal.classList.add('active');
 }
 
+function closeModal() {
+  const modal = document.getElementById('productModal');
+  modal.classList.remove('active');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === "Escape") closeModal();
+});
+
+async function addCurrentProductToCart() {
+  if (!currentProductId) return;
+  
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    alert("Faça login para adicionar ao carrinho");
+    return;
+  }
+
+  try {
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({id: currentProductId, qty: 1})
+    });
+    alert("Produto adicionado ao carrinho!");
+    closeModal();
+  } catch (e) {
+    alert("Erro ao adicionar ao carrinho");
+  }
+}
+
+// =================== RENDER PRODUCTS COM CLIQUE ===================
 function renderProduct(p) {
   const isBadgeNew = p.badge === 'NOVO' || p.badge === 'IA' || p.badge === 'TOP' || p.badge === 'LIMITED';
-  return `
+  const html = `
   <div class="product-card fade-up">
     <div class="product-img">
       <div class="product-glow-ring"></div>
@@ -1706,37 +2124,27 @@ function renderProduct(p) {
       </button>
     </div>
   </div>`;
+
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  const card = temp.firstElementChild;
+
+  // Clique no card (exceto botão comprar)
+  card.addEventListener('click', (e) => {
+    if (!e.target.closest('.btn-buy')) {
+      openProductModal(p);
+    }
+  });
+
+  return card;
 }
 
-document.getElementById('products-grid').innerHTML = products.map(renderProduct).join('');
-
-// Carousel
-const carouselProducts = [...products].reverse();
-document.getElementById('carousel').innerHTML = carouselProducts.map(p => `
-  <div class="carousel-item product-card">
-    <div class="product-img">
-      <div class="product-glow-ring"></div>
-      <div class="product-img-inner">${p.icon}</div>
-      <span class="badge-discount">${p.discount}</span>
-    </div>
-    <div class="product-info">
-      <div class="product-cat">${p.cat}</div>
-      <div class="product-name">${p.name}</div>
-      <div class="product-rating">
-        <div class="stars">${renderStars(p.rating)}</div>
-        <span>${p.rating}</span>
-      </div>
-      <div class="price-current">${p.price}</div>
-    </div>
-  </div>`).join('');
-
-let carouselIndex = 0;
-function moveCarousel(dir) {
-  const track = document.getElementById('carousel');
-  const items = track.children.length;
-  carouselIndex = Math.max(0, Math.min(carouselIndex + dir, items - 3));
-  track.style.transform = `translateX(-${carouselIndex * 296}px)`;
-}
+// Atualiza a renderização
+const productsGrid = document.getElementById('products-grid');
+productsGrid.innerHTML = '';
+products.forEach(p => {
+  productsGrid.appendChild(renderProduct(p));
+});
 
 // =================== LOADING ===================
 window.addEventListener('load', async () => {
