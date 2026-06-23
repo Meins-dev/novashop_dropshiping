@@ -1357,55 +1357,6 @@ opacity:.4;
 
       <script>
       // Carrega produtos da API e renderiza cards
-      async function loadProducts(){
-        try{
-          const res = await fetch('/api/products');
-          if(!res.ok) return;
-          const data = await res.json();
-          const grid = document.getElementById('productsGrid');
-          grid.innerHTML = '';
-          (data.products||[]).forEach(p=>{
-            const card = document.createElement('div'); card.className='product-card';
-            card.innerHTML = `
-              <div class="product-img">
-                <div class="product-img-inner"><img src="${p.image||'/static/images/products/default.svg'}" alt="${p.name}" style="max-height:160px"></div>
-              </div>
-              <div class="product-info">
-                <div class="product-cat">${p.category||''}</div>
-                <div class="product-name">${p.name}</div>
-                <div class="product-rating"><div class="stars">${'★'.repeat(Math.round(p.rating||4))}</div><span>${p.rating||''}</span></div>
-                <div class="product-price-row">
-                  <div class="product-price"><div class="price-current">R$ ${Number(p.price).toFixed(2)}</div><div class="price-old">${p.original_price?('R$ '+Number(p.original_price).toFixed(2)):''}</div></div>
-                </div>
-                <button class="btn-buy" data-id="${p.id}">Adicionar ao carrinho</button>
-              </div>
-            `;
-            grid.appendChild(card);
-          });
-
-          // bind add-to-cart
-          document.querySelectorAll('.btn-buy').forEach(b=>{
-            b.addEventListener('click', async ()=>{
-              const id = Number(b.getAttribute('data-id'));
-              const token = localStorage.getItem('access_token');
-              if(!token){ alert('Por favor, faça login para adicionar itens ao carrinho'); window.location.href='login.html'; return }
-              try {
-                const res = await fetch('/api/cart', {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
-                  body: JSON.stringify({id: id, qty: 1})
-                });
-                if(res.ok) {
-                  const cartRes = await fetch('/api/cart', { headers: {'Authorization': `Bearer ${token}`} });
-                  const {items} = await cartRes.json();
-                  const badge = document.querySelector('.cart-badge');
-                  if(badge) badge.textContent = String(items.length);
-                }
-              } catch(e) { console.error('Erro ao adicionar ao carrinho', e); }
-            })
-          })
-        }catch(e){console.error(e)}
-      }
       loadProducts();
       </script>
           <div class="reviewer-badge">⬡ CLIENTE VERIFICADO</div>
@@ -2171,21 +2122,55 @@ products.forEach(p => {
 
 // =================== LOADING ===================
 window.addEventListener('load', async () => {
-  // Update cart badge
-  const token = localStorage.getItem('access_token');
-  if(token) {
-    try {
-      const res = await fetch('/api/cart', { headers: {'Authorization': `Bearer ${token}`} });
-      const {items} = await res.json();
-      const badge = document.querySelector('.cart-badge');
-      if(badge) badge.textContent = String(items.length);
-    } catch(e) { console.error('Erro ao atualizar badge', e); }
-  }
 
-  setTimeout(() => {
-    document.getElementById('loading').classList.add('hidden');
-    initAnimations();
-  }, 2200);
+  try {
+
+    const token = localStorage.getItem('access_token');
+
+    if (token) {
+      try {
+        const res = await fetch('/api/cart', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+
+          const badge = document.querySelector('.cart-badge');
+
+          if (badge) {
+            badge.textContent = String(
+              (data.items || []).length
+            );
+          }
+        }
+
+      } catch (e) {
+        console.error('Erro carrinho:', e);
+      }
+    }
+
+    initAnimations?.();
+
+  } catch (e) {
+
+    console.error('Erro inicialização:', e);
+
+  } finally {
+
+    const loading = document.getElementById('loading');
+
+    if (loading) {
+
+      loading.classList.add('hidden');
+
+      loading.style.opacity = '0';
+      loading.style.visibility = 'hidden';
+      loading.style.pointerEvents = 'none';
+    }
+  }
 });
 
 // =================== CURSOR ===================
