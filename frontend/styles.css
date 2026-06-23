@@ -510,15 +510,36 @@ nav {
 
 .product-card {
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 28px;
   overflow: hidden;
   box-shadow: var(--card-shadow);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+  transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), box-shadow 0.4s ease, filter 0.4s ease, border-color 0.4s ease;
   position: relative;
   transform: translateY(18px);
   opacity: 0;
 }
-
+.product-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 28px;
+  z-index: 0;
+  pointer-events: none;
+}
+.group:hover .product-card::before,
+.product-card:hover::before {
+  opacity: 1;
+}
+.product-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 20px 60px rgba(79, 70, 229, 0.22), 0 0 0 1px rgba(139, 92, 246, 0.2);
+  filter: saturate(1.05);
+}
 .product-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 26px 70px rgba(79, 70, 229, 0.18);
