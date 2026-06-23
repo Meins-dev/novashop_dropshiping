@@ -85,23 +85,14 @@
 <div id="cursor-trail"></div>
 
 <!-- HEADER -->
-<header id="header">
-    <div class="logo">
-        <div class="logo-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L13 4V10L7 13L1 10V4L7 1Z" stroke="#A855F7" stroke-width="1.2" fill="rgba(168,85,247,.15)"/>
-                <path d="M7 4V10M4 5.5L10 8.5" stroke="#A855F7" stroke-width="1"/>
-            </svg>
-        </div>
-        NEXUS ADMIN
-    </div>
-    <nav>
-        <a href="index.html">Voltar à Loja</a>
-    </nav>
-    <div class="header-actions">
-        <a class="cta-sm" id="logout-btn">Sair</a>
-    </div>
-</header>
+<div id="header-placeholder"></div>
+<script>
+  fetch('header.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('header-placeholder').innerHTML = data;
+    });
+</script>
 
 <main class="admin-container">
     <div class="admin-header fade-up">
@@ -127,7 +118,7 @@
 </main>
 
 <!-- FOOTER -->
-<footer style="margin-top: 4rem;">
+<footer>
     <div class="footer-grid">
         <div class="footer-brand">
             <div class="logo">
@@ -137,7 +128,7 @@
                         <path d="M7 4V10M4 5.5L10 8.5" stroke="#A855F7" stroke-width="1"/>
                     </svg>
                 </div>
-                NEXUS
+                <a href="index.html">NEXUS</a>
             </div>
             <p class="footer-desc">Tecnologia do futuro, disponível agora. Curadoria de produtos premium para quem não aceita menos que o melhor.</p>
             <div class="social-links">
@@ -150,19 +141,31 @@
         <div class="footer-col">
             <h5>Produtos</h5>
             <div class="footer-links">
-                <a href="#">Smartwatches</a><a href="#">Earbuds</a><a href="#">Monitores</a><a href="#">Câmeras</a><a href="#">Acessórios</a>
+                <a href="index.html#produtos">Smartwatches</a>
+                <a href="index.html#produtos">Earbuds</a>
+                <a href="index.html#produtos">Monitores</a>
+                <a href="index.html#produtos">Câmeras</a>
+                <a href="index.html#produtos">Acessórios</a>
             </div>
         </div>
         <div class="footer-col">
             <h5>Empresa</h5>
             <div class="footer-links">
-                <a href="#">Sobre Nós</a><a href="#">Blog</a><a href="#">Carreiras</a><a href="#">Parcerias</a><a href="#">Imprensa</a>
+                <a href="about.html">Sobre Nós</a>
+                <a href="#">Blog</a>
+                <a href="careers.html">Carreiras</a>
+                <a href="partners.html">Parcerias</a>
+                <a href="press.html">Imprensa</a>
             </div>
         </div>
         <div class="footer-col">
             <h5>Suporte</h5>
             <div class="footer-links">
-                <a href="#">Central de Ajuda</a><a href="#">Rastrear Pedido</a><a href="#">Devoluções</a><a href="#">Garantia</a><a href="#">Contato</a>
+                <a href="help.html">Central de Ajuda</a>
+                <a href="track.html">Rastrear Pedido</a>
+                <a href="returns.html">Devoluções</a>
+                <a href="warranty.html">Garantia</a>
+                <a href="contact.html">Contato</a>
             </div>
         </div>
     </div>
